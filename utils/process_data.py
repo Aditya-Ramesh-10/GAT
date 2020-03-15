@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pickle as pkl
 import networkx as nx
@@ -15,12 +16,10 @@ def parse_index_file(filename):
 
 
 def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
-    """Load data."""
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
-        #with open("data/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
-        with open("ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
+        with open("./data/cora/ind.{}.{}".format(dataset_str, names[i]), 'rb') as f:
             if sys.version_info > (3, 0):
                 objects.append(pkl.load(f, encoding='latin1'))
             else:
@@ -28,19 +27,8 @@ def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
 
     x, y, tx, ty, allx, ally, graph = tuple(objects)
     #test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset_str))
-    test_idx_reorder = parse_index_file("ind.{}.test.index".format(dataset_str))
+    test_idx_reorder = parse_index_file("./data/cora/ind.{}.test.index".format(dataset_str))
     test_idx_range = np.sort(test_idx_reorder)
-
-    if dataset_str == 'citeseer':
-        # Fix citeseer dataset (there are some isolated nodes in the graph)
-        # Find isolated nodes, add them as zero-vecs into the right position
-        test_idx_range_full = range(min(test_idx_reorder), max(test_idx_reorder)+1)
-        tx_extended = sp.lil_matrix((len(test_idx_range_full), x.shape[1]))
-        tx_extended[test_idx_range-min(test_idx_range), :] = tx
-        tx = tx_extended
-        ty_extended = np.zeros((len(test_idx_range_full), y.shape[1]))
-        ty_extended[test_idx_range-min(test_idx_range), :] = ty
-        ty = ty_extended
 
     features = sp.vstack((allx, tx)).tolil()
     features[test_idx_reorder, :] = features[test_idx_range, :]
